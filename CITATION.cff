@@ -40,13 +40,4 @@ keywords:
   - fixed-point
   - metrology
   - scientific software
-references:
-  - type: "article"
-    authors:
-      - family-names: "Sakuma"
-        given-names: "F."
-      - family-names: "Hattori"
-        given-names: "S."
-    title: "Establishing a practical temperature standard by using a radiation thermometer with a silicon photodiode detector"
-    year: 1982
-    journal: "High Temperatures"
+
