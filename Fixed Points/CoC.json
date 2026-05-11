@@ -1,0 +1,1 @@
+{"Name": "CoC", "Temperature": 1597.39, "Unit": "K ", "Signal": 3.0723e-09, "IsFixedPoint": true, "Temperature_Un": {"Names": ["Repeatability"], "Values": [110.0], "Unit": ["mK"]}, "Signal_Un": {"Names": ["Emissivity of fixed point", "Ambient conditions", "SSE", "Gain ratios", "Repeatability"], "Values": [0.0, 0.001, 0.01, 0.01, 0.006], "Unit": ["%", "%", "%", "%", "%"]}}

@@ -1,0 +1,1 @@
+{"Name": "Ru-C", "Temperature": 2227.1, "Unit": "K ", "Signal": 1.53655e-07, "IsFixedPoint": true, "Temperature_Un": {"Names": ["Total"], "Values": [260.0], "Unit": ["mK"]}, "Signal_Un": {"Names": ["Emissivity of fixed point", "Ambient conditions", "SSE", "Gain ratios", "Repeatability"], "Values": [0.0, 0.001, 0.01, 0.01, 0.006], "Unit": ["%", "%", "%", "%", "%"]}}

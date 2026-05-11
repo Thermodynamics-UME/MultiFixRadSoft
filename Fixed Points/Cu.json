@@ -1,0 +1,1 @@
+{"Name": "Cu", "Temperature": 1357.802, "Unit": "K ", "Signal": 2.6772e-10, "IsFixedPoint": true, "Temperature_Un": {"Names": ["Total"], "Values": [80.0], "Unit": ["mK"]}, "Signal_Un": {"Names": ["Emissivity of fixed point", "Ambient conditions", "Repeatability"], "Values": [0.01, 0.002, 0.003], "Unit": ["%", "%", "%"]}}

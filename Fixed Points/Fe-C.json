@@ -1,0 +1,1 @@
+{"Name": "Fe-C", "Temperature": 1426.71, "Unit": "K ", "Signal": 5.87538e-10, "IsFixedPoint": true, "Temperature_Un": {"Names": ["Total"], "Values": [100.0], "Unit": ["mK"]}, "Signal_Un": {"Names": ["Emissivity of fixed point", "Ambient conditions", "SSE", "Gain ratios", "Repeatability"], "Values": [0.0, 0.001, 0.01, 0.01, 0.006], "Unit": ["%", "%", "%", "%", "%"]}}

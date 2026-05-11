@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# User-specific model/settings files
+models/custom_themes.json
+models/plot_settings.json
+models/modelsplot_settings.json
+
+# PyInstaller
+*.spec
+
+# Distribution
+*.exe
+*.msi
+
+# Excluded documentation
+MATH.md

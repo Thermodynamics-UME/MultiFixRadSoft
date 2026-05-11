@@ -1,0 +1,1 @@
+{"Name": "ReC", "Temperature": 2747.84, "Unit": "K ", "Signal": 1.00886e-06,"IsFixedPoint": true, "Temperature_Un": {"Names": ["Total"], "Values": [350.0], "Unit": ["mK"]}, "Signal_Un": {"Names": ["Emissivity of fixed point", "Ambient conditions", "SSE", "Gain ratios", "Repeatability"], "Values": [0.0, 0.001, 0.01, 0.01, 0.006], "Unit": ["%", "%", "%", "%", "%"]}}

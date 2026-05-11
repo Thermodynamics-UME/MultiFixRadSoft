@@ -1,0 +1,1 @@
+{"Name": "In-Use Signal", "Temperature": 0.0, "Unit": "K", "Signal": 0.0, "IsFixedPoint": false, "Temperature_Un": {"Names": ["SSE", "Non-linearity", "Gain ratios", "Ambient conditions", "Drift", "Repeatability"], "Values": [0.01, 0.005, 0.01, 0.002, 0.01, 0.003], "Unit": ["%", "%", "%", "%","%","%"]}, "Signal_Un": {"Names": [], "Values": [], "Unit": []}}

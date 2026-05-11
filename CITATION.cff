@@ -1,0 +1,52 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the accompanying paper."
+authors:
+  - family-names: "Ertürk"
+    given-names: "M."
+  - family-names: "Karabulut"
+    given-names: "M."
+  - family-names: "Kadı"
+    given-names: "Ö.F."
+  - family-names: "Gözönünde"
+    given-names: "C."
+  - family-names: "Broberg"
+    given-names: "P."
+  - family-names: "Olsen"
+    given-names: "Å.A.F."
+  - family-names: "Nasibli"
+    given-names: "H."
+title: "MultiFixRadSoft: A Comprehensive Tool for Primary Relative Radiometric Scale Realization in Radiation Thermometry"
+journal: "Sensors"
+volume: 26
+issue: 8
+article-number: 2489
+year: 2026
+publisher: "MDPI"
+abstract: "Modern GUI application for multi-fixed-point radiation thermometry analysis. Includes data analysis, scale realization, corrections, and comprehensive uncertainty budget calculation."
+version: 1.0.0
+date-released: 2026-03-26
+url: "https://github.com/Thermodynamics-UME/MultiFixRadSoft"
+repository-code: "https://github.com/Thermodynamics-UME/MultiFixRadSoft"
+license: "MIT"
+doi: "10.3390/s26082489"
+identifiers:
+  - type: doi
+    value: "10.3390/s26082489"
+keywords:
+  - radiation thermometry
+  - calibration
+  - uncertainty propagation
+  - sakuma-hattori
+  - fixed-point
+  - metrology
+  - scientific software
+references:
+  - type: "article"
+    authors:
+      - family-names: "Sakuma"
+        given-names: "F."
+      - family-names: "Hattori"
+        given-names: "S."
+    title: "Establishing a practical temperature standard by using a radiation thermometer with a silicon photodiode detector"
+    year: 1982
+    journal: "High Temperatures"
