@@ -22,8 +22,7 @@ MultiFixRadSoft is an open-source desktop GUI application for relative primary 
 
 The software supports ITS-90 metal fixed points and metal–carbon / metal-carbide–carbon eutectic high-temperature fixed points (HTFPs) , with flexible calibration schemes from a single fixed point up to N points. The software has been validated through comparison with manual analyses and published reference datasets. It is specifically designed to facilitate the adoption of primary thermodynamic temperature realization methods within the redefined SI framework by reducing the mathematical and computational burden on emerging National Metrology Institutes (NMIs), Designated Institutes (DIs), and industrial laboratories.
 
-<!-- TODO: Add a screenshot of the running application here. Capture the main window and save it to img/screenshot.png, then uncomment the line below -->
-<!-- ![MultiFixRadSoft Main Window](img/screenshot.png) -->
+![MultiFixRadSoft Main Window](img/Screenshot.png)
 
 ---
 
