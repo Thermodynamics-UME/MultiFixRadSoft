@@ -1306,17 +1306,17 @@ class ScaleRealizationPage(QWidget):
                 lambda_eff = np.sum(self.wavelength * self.spectral_resp) / np.sum(self.spectral_resp)
                 
                 # Plot Lambda Eff line
-                self.input_canvas.ax.axvline(x=lambda_eff, color='green', linestyle='--', linewidth=2, label=f'$\lambda_c$ = {lambda_eff:.2f} nm')
+                self.input_canvas.ax.axvline(x=lambda_eff, color='green', linestyle='--', linewidth=2, label=rf'$\lambda_c$ = {lambda_eff:.2f} nm')
                 
                 # Add text annotation for FWHM
                 mid_wl = (wl1 + wl2) / 2
-                self.input_canvas.ax.text(mid_wl, 0.52, f'FWHM\n{fwhm:.2f} nm', 
+                self.input_canvas.ax.text(mid_wl, 0.52, rf'FWHM\n{fwhm:.2f} nm', 
                                          ha='center', va='bottom', fontsize=10, 
                                          bbox=dict(boxstyle='round,pad=0.5', facecolor='yellow', alpha=0.7))
                 
                 # Add text annotation for Lambda Eff
                 # Position it slightly above the FWHM or at the top
-                self.input_canvas.ax.text(lambda_eff, 0.90, f'$\lambda_c$ = {lambda_eff:.2f} nm', 
+                self.input_canvas.ax.text(lambda_eff, 0.90, rf'$\lambda_c$ = {lambda_eff:.2f} nm', 
                                          ha='left', va='top', fontsize=10, transform=self.input_canvas.ax.get_xaxis_transform(),
                                          bbox=dict(boxstyle='round,pad=0.5', facecolor='lightgreen', alpha=0.7))
 
@@ -1557,14 +1557,14 @@ class ScaleRealizationPage(QWidget):
             # Calculate integrals
             # ref integral
             integrand_ref = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2_val / (self.wavelength * 1e-9 * ref_temp)) - 1))
-            integral_ref = np.trapz(integrand_ref, x=self.wavelength * 1e-9)
+            integral_ref = np.trapezoid(integrand_ref, x=self.wavelength * 1e-9)
             
             self._log(f"Starting ITS-90 fit calculation for {len(temps_fit)} points...", "INFO")
             
             # Calculate signals for range
             for T in temps_fit:
                 integrand = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2_val / (self.wavelength * 1e-9 * T)) - 1))
-                integral = np.trapz(integrand, x=self.wavelength * 1e-9)
+                integral = np.trapezoid(integrand, x=self.wavelength * 1e-9)
                 S = Sref * integral / integral_ref
                 signals_calc.append(S)
             
@@ -2132,10 +2132,10 @@ class ScaleRealizationPage(QWidget):
                 
                 # integrals
                 integrand_ref = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2 / (self.wavelength * 1e-9 * ref_temp)) - 1))
-                integral_ref = np.trapz(integrand_ref, x=self.wavelength * 1e-9)
+                integral_ref = np.trapezoid(integrand_ref, x=self.wavelength * 1e-9)
                 
                 integrand = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2 / (self.wavelength * 1e-9 * temp)) - 1))
-                integral = np.trapz(integrand, x=self.wavelength * 1e-9)
+                integral = np.trapezoid(integrand, x=self.wavelength * 1e-9)
                 
                 signal = Sref * integral / integral_ref
                 
