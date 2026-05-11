@@ -6,7 +6,7 @@
 
 **Multi-Fixed-Point Radiation Thermometry Analysis Software**
 
-Developed by [TUBITAK-UME Thermodynamic Metrology Laboratory](https://www.tubitak.gov.tr)
+Developed by [TUBITAK-UME Thermodynamic Metrology Laboratory](https://www.ume.tubitak.gov.tr/en/physics-group-laboratories/#termodinamik)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
@@ -179,7 +179,5 @@ MultiFixRadSoft is a community-driven project and we welcome all contributions. 
 ## Contact
 
 **TUBITAK-UME Thermodynamic Metrology Laboratory**
-<!-- TODO: Confirm that this e-mail address is correct and should be public -->
 ✉ [ume.g1td_yazilim@tubitak.gov.tr](mailto:ume.g1td_yazilim@tubitak.gov.tr)
 
-<!-- TODO: Optionally add a link to your institution's website or the lab's page -->
