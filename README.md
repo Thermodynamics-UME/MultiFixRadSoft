@@ -1,6 +1,5 @@
 <div align="center">
 
-<!-- TODO: Replace the path below if you rename/move the logo, or remove this line if you prefer no logo -->
 <img src="img/ume_logo.png" alt="TUBITAK-UME Logo" height="80"/>
 
 # MultiFixRadSoft
@@ -9,13 +8,9 @@
 
 Developed by [TUBITAK-UME Thermodynamic Metrology Laboratory](https://www.tubitak.gov.tr)
 
-<!-- TODO: After creating the GitHub repository, replace Thermodynamics-UME/MultiFixRadSoft with your actual GitHub path in ALL badge URLs below -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](CHANGELOG.md)
-<!-- TODO: Uncomment the lines below once CI/CD is set up on GitHub -->
-<!-- [![Tests](https://github.com/Thermodynamics-UME/MultiFixRadSoft/actions/workflows/tests.yml/badge.svg)](https://github.com/Thermodynamics-UME/MultiFixRadSoft/actions/workflows/tests.yml) -->
-<!-- [![codecov](https://codecov.io/gh/Thermodynamics-UME/MultiFixRadSoft/branch/main/graph/badge.svg)](https://codecov.io/gh/Thermodynamics-UME/MultiFixRadSoft) -->
 
 </div>
 
@@ -64,7 +59,6 @@ The software supports ITS-90 metal fixed points and metal–carbon / metal-carbi
 
 ```bash
 # 1. Clone the repository
-# TODO: Replace Thermodynamics-UME with your actual GitHub username
 git clone https://github.com/Thermodynamics-UME/MultiFixRadSoft.git
 cd MultiFixRadSoft
 
