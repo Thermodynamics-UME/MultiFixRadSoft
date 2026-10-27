@@ -497,13 +497,28 @@ class CorrectionsPage(QWidget):
             # ---------------------------------------------------------
             scan_x = getattr(self, 'sse_scan_x', None)
             scan_y = getattr(self, 'sse_scan_y', None)
-            has_scan_data = scan_x is not None and scan_y is not None
-            
+            if scan_x is None or scan_y is None:
+                raise ValueError("Please load scan data first")
+
+            scan_x = np.asarray(scan_x, dtype=float)
+            scan_y = np.asarray(scan_y, dtype=float)
+            order = np.argsort(scan_x)
+            scan_x, scan_y = scan_x[order], scan_y[order]
+
+            # Fold the scan about the centre and normalise so L(0) = 1:
+            # L(r) = (L(+r) + L(-r)) / 2 / L(0)
+            l_centre = np.interp(0.0, scan_x, scan_y)
+            if l_centre == 0:
+                raise ValueError("Scan radiance at the centre is zero")
+
             c_sse_pos = 0.0
             c_sse_neg = 0.0
-            
-            # 2.0 mm diameter step (1.0 mm radius step)
-            step_d = 2.0
+
+            # Ring step follows the scan spacing (radius spacing -> diameter step)
+            dx = np.diff(scan_x)
+            step_d = 2.0 * float(np.median(dx)) if len(dx) else 2.0
+            if step_d <= 0:
+                step_d = 2.0
             current_d = cavity_size
             
             while current_d < furnace_size:
@@ -522,13 +537,12 @@ class CorrectionsPage(QWidget):
                 d_mid = (d_in + d_out) / 2.0
                 r_mid = d_mid / 2.0
                 
-                l_norm = 1.0
-                if has_scan_data:
-                    l_norm = np.interp(r_mid, scan_x, scan_y)
-                
+                l_norm = 0.5 * (np.interp(r_mid, scan_x, scan_y) +
+                                np.interp(-r_mid, scan_x, scan_y)) / l_centre
+
                 # Assign to positive or negative contribution
                 if d_mid <= target_size:
-                    c_sse_pos += delta_sse / l_norm
+                    c_sse_pos += delta_sse * (1.0 - l_norm)
                 else:
                     c_sse_neg += delta_sse * l_norm
                     
