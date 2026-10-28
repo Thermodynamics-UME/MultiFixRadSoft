@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.1.0] - 2026-10-28
+## [1.0.1] - 2026-10-28
 
 ### Added
 - Scale Realization: **Find Optimal Combination** searches every subset of fixed points (weighted and

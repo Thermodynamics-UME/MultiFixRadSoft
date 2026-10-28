@@ -34,14 +34,14 @@ If you use MultiFixRadSoft in your research or development, please cite:
   title     = {MultiFixRadSoft: Multi-Fixed-Point Radiation Thermometry Software},
   author    = {{TUBITAK-UME Thermodynamic Metrology Laboratory}},
   year      = {2026},
-  version   = {1.1.0},
+  version   = {1.0.1},
   url       = {https://github.com/Thermodynamics-UME/MultiFixRadSoft}
 }
 ```
 
 Or in text form:
 
-> TUBITAK-UME Thermodynamic Metrology Laboratory. *MultiFixRadSoft: Multi-Fixed-Point Radiation Thermometry Software*, v1.1.0, 2026.
+> TUBITAK-UME Thermodynamic Metrology Laboratory. *MultiFixRadSoft: Multi-Fixed-Point Radiation Thermometry Software*, v1.0.1, 2026.
 
 ## How to Contribute
 

@@ -10,7 +10,7 @@ Developed by [TUBITAK-UME Thermodynamic Metrology Laboratory](https://www.ume.tu
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.1-green.svg)](CHANGELOG.md)
 
 </div>
 
@@ -113,7 +113,6 @@ MultiFixRadSoft/
 ├── requirements.txt               # Runtime dependencies
 ├── LICENSE                        # MIT License
 ├── CHANGELOG.md                   # Version history
-├── CONTRIBUTING.md                # Contribution guide
 ├── CITATION.cff                   # Citation metadata
 ├── src/                           # Source package
 │   ├── theme_manager.py           # Theme system & custom theme editor
