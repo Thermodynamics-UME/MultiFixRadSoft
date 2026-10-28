@@ -39,3 +39,6 @@ models/modelsplot_settings.json
 
 # Excluded documentation
 MATH.md
+
+# Local tests
+tests/
