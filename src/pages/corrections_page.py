@@ -33,6 +33,37 @@ def _r2_score(y_true, y_pred):
 
     return 1.0 - (ss_res / ss_tot)
 
+def prepare_scan(scan_x, scan_y):
+    """Validate a source radiance scan for the SSE ring correction.
+
+    The correction folds the scan about the centre and normalises it to L(0),
+    so it needs finite points that straddle x = 0 and a positive centre value.
+    Returns (x, y, n_dropped) with x ascending; raises ValueError otherwise.
+    """
+    x = np.asarray(scan_x, dtype=float)
+    y = np.asarray(scan_y, dtype=float)
+    keep = np.isfinite(x) & np.isfinite(y)
+    n_dropped = int(np.count_nonzero(~keep))
+    x, y = x[keep], y[keep]
+    if len(x) < 3:
+        raise ValueError("Scan needs at least 3 finite points")
+
+    order = np.argsort(x)
+    x, y = x[order], y[order]
+    if np.any(np.diff(x) <= 0):
+        raise ValueError("Scan has duplicate x positions")
+    if not (x[0] < 0.0 < x[-1]):
+        raise ValueError(
+            f"Scan must cover both sides of the centre (x = 0 mm); it spans {x[0]:g} to {x[-1]:g} mm. "
+            "Shift the positions so the source centre is at 0."
+        )
+
+    l_centre = float(np.interp(0.0, x, y))
+    if l_centre <= 0 or l_centre < 1e-6 * float(np.max(y)):
+        raise ValueError(f"Scan radiance at the centre must be positive (got {l_centre:g})")
+    return x, y, n_dropped
+
+
 class CorrectionsPage(QWidget):
     """Corrections page for linearity and other corrections"""
     
@@ -170,11 +201,14 @@ class CorrectionsPage(QWidget):
             else:
                 data = pd.read_csv(file_path, sep='\t', header=None)
             
-            self.sse_scan_x = data.iloc[:, 0].values
-            self.sse_scan_y = data.iloc[:, 1].values
+            scan_x, scan_y, n_dropped = prepare_scan(data.iloc[:, 0].values, data.iloc[:, 1].values)
+            if n_dropped:
+                self._log(f"Ignored {n_dropped} scan row(s) with missing values", "WARNING")
+            self.sse_scan_x = scan_x
+            self.sse_scan_y = scan_y
             
-            # Set furnace size to the range of x-axis
-            furnace_size = max(self.sse_scan_x) - min(self.sse_scan_x)
+            # Furnace diameter = span covered on both sides of the centre
+            furnace_size = 2.0 * min(-scan_x[0], scan_x[-1])
             self.sse_furnace_edit.setText(f"{furnace_size:.2f}")
             
             # Plot scan data
@@ -500,16 +534,14 @@ class CorrectionsPage(QWidget):
             if scan_x is None or scan_y is None:
                 raise ValueError("Please load scan data first")
 
-            scan_x = np.asarray(scan_x, dtype=float)
-            scan_y = np.asarray(scan_y, dtype=float)
-            order = np.argsort(scan_x)
-            scan_x, scan_y = scan_x[order], scan_y[order]
+            scan_x, scan_y, _ = prepare_scan(scan_x, scan_y)
+            if furnace_size / 2.0 > min(-scan_x[0], scan_x[-1]):
+                self._log("Furnace size is larger than the scanned area; the scan edge value is "
+                          "used beyond it", "WARNING")
 
             # Fold the scan about the centre and normalise so L(0) = 1:
             # L(r) = (L(+r) + L(-r)) / 2 / L(0)
             l_centre = np.interp(0.0, scan_x, scan_y)
-            if l_centre == 0:
-                raise ValueError("Scan radiance at the centre is zero")
 
             c_sse_pos = 0.0
             c_sse_neg = 0.0

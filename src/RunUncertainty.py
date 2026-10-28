@@ -280,7 +280,12 @@ class RunUncertainty:
                 x_val = 2 * self.a3 / self.c2
                 if 1 - 6 * x_val != 0:
                     self.lamda = (self.a2 / (1 - 6 * x_val)) * 1e9 # to nm
-                    self.sigma = (self.lamda * 1e-9 * np.sqrt(x_val)) * 1e9 # to nm
+                    if x_val >= 0:
+                        self.sigma = (self.lamda * 1e-9 * np.sqrt(x_val)) * 1e9 # to nm
+                    else:
+                        # a3 < 0 has no real sigma; a1..a3 stay as fitted, sigma is display-only
+                        logger.warning("Fitted a3 < 0: no real bandwidth sigma; using sigma = 0.")
+                        self.sigma = 0.0
                 else:
                     self.lamda = 0
                     self.sigma = 0
@@ -293,11 +298,6 @@ class RunUncertainty:
                 logger.error("N>=3 Fit Error: %s", e)
                 # Fallback to initial guess
                 self.a1, self.a2, self.a3 = p0
-
-        # Convert the coefficients to Sakuma-Hattori form
-        if self.n >= 3:  # Already calculated above for N=1,2
-            self.a2 = (1 - 6 * ((self.sigma / self.lamda) ** 2)) * self.lamda * 1e-9
-            self.a3 = self.c2 * ((self.sigma / self.lamda) ** 2) / 2
 
         logger.debug("Final Coeffs -> A1: %.4e, A2: %.4e, A3: %.4e", self.a1, self.a2, self.a3)
 
@@ -411,11 +411,12 @@ class RunUncertainty:
 
     def get_components(self):
         self.components = []
+        T_si = [float(t) for t in UncertaintyComponent.to_SI_Units(None, self.T, self.T_units)[0]]
         if self.n <= 2:
-            params = [self.a1, self.c2, self.sigma*1e-9, self.lamda*1e-9, *self.T, *self.S]
+            params = [self.a1, self.c2, self.sigma*1e-9, self.lamda*1e-9, *T_si, *self.S]
             n_key = self.n
         else:
-            params = [self.a1, self.c2, self.sigma * 1e-9, self.lamda * 1e-9, self.T, self.S]
+            params = [self.a1, self.c2, self.sigma * 1e-9, self.lamda * 1e-9, T_si, self.S]
             n_key = 3
 
         # --- WLS propagation machinery for overdetermined case (n > 3) ---

@@ -16,6 +16,59 @@ from PySide6.QtGui import QFont, QColor, QKeyEvent, QKeySequence, QAction
 from plot_canvas import PlotCanvas
 from theme_manager import ThemeManager
 
+# Used for names the repo's "Fixed Points" folder does not define (Ag, Au, Pt-C);
+# the JSON files in that folder take precedence.
+_BUILTIN_FIXED_POINTS = {
+    'Ag': 1234.93,
+    'Au': 1337.33,
+    'Cu': 1357.802,
+    'Fe-C': 1426.71,
+    'Co-C': 1597.39,
+    'Pd-C': 1764.95,
+    'Pt-C': 2041.4,
+    'Ru-C': 2227.1,
+    'ReC': 2747.84,
+    'WC-C': 3020.75,
+}
+
+
+def load_fixed_point_library(fixed_points_dir=None):
+    """Return {name: {'Temperature': K, 'Signal': float | None}}.
+
+    Starts from the built-in values and overlays every ``*.json`` file in the
+    repository's ``Fixed Points`` folder. A file whose name matches a built-in
+    ignoring dashes and case (CoC.json / Co-C) replaces that entry instead of
+    adding a duplicate.
+    """
+    import json
+    from pathlib import Path
+
+    library = {k: {'Temperature': float(v), 'Signal': None} for k, v in _BUILTIN_FIXED_POINTS.items()}
+    if fixed_points_dir is None:
+        fixed_points_dir = Path(__file__).resolve().parents[2] / "Fixed Points"
+
+    def norm(name):
+        return name.replace('-', '').lower()
+
+    by_norm = {norm(k): k for k in library}
+    for path in sorted(Path(fixed_points_dir).glob("*.json")):
+        try:
+            with open(path, 'r', encoding='utf-8') as fh:
+                data = json.load(fh)
+            temp = data.get('Temperature')
+            if temp is None:
+                continue
+            temp = float(temp)
+            if str(data.get('Unit', 'K')).strip() == 'C':
+                temp += 273.15
+            sig = data.get('Signal')
+            name = by_norm.get(norm(path.stem), path.stem)
+            library[name] = {'Temperature': temp, 'Signal': float(sig) if sig is not None else None}
+        except (OSError, ValueError, TypeError):
+            continue
+    return library
+
+
 class FixedPointPopup(QDialog):
     """Popup dialog for fixed point table"""
     def __init__(self, table_widget, parent=None):
@@ -1335,77 +1388,8 @@ class ScaleRealizationPage(QWidget):
             self._log(f"Plot error: {str(e)}", "ERROR")
 
     def load_fixed_point_library(self):
-        """Load standard fixed point definitions from repository JSON files into self.fp_library
-        The library maps name -> dict with keys 'Temperature' and 'Signal' (if available).
-        """
-        self.fp_library = {}
-        try:
-            import glob, json, os
-            base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        except Exception:
-            base = None
-
-        # search common folders in workspace for Fixed Points
-        candidates = []
-        work_dirs = [
-            os.path.join(os.path.dirname(__file__), "MultiFIX Calculator v0.9.1", "Fixed Points"),
-            os.path.join(os.path.dirname(__file__), "MultiFIX Calculator v0.9", "Fixed Points"),
-            os.path.join(os.path.dirname(__file__), "MultiFIX Calculator", "Fixed Points")
-        ]
-        for d in work_dirs:
-            try:
-                if os.path.isdir(d):
-                    candidates.append(d)
-            except Exception:
-                continue
-
-        # also check workspace root
-        try:
-            import glob
-            root = os.path.dirname(__file__)
-            g = glob.glob(os.path.join(root, "**", "Fixed Points", "*.json"), recursive=True)
-            for p in g:
-                candidates.append(os.path.dirname(p))
-        except Exception:
-            pass
-
-        seen = set()
-        for d in candidates:
-            try:
-                files = glob.glob(os.path.join(d, "*.json"))
-                for f in files:
-                    name = os.path.splitext(os.path.basename(f))[0]
-                    if name in seen:
-                        continue
-                    with open(f, 'r', encoding='utf-8') as fh:
-                        try:
-                            jd = json.load(fh)
-                            t = jd.get('Temperature')
-                            s = jd.get('Signal')
-                            if t is not None:
-                                self.fp_library[name] = {'Temperature': float(t), 'Signal': float(s) if s is not None else None}
-                                seen.add(name)
-                        except Exception:
-                            continue
-            except Exception:
-                continue
-
-        # fallback built-ins if library empty
-        if not self.fp_library:
-            builtins = {
-                'Ag': 1234.93,
-                'Au': 1337.33,
-                'Cu': 1357.802,
-                'Fe-C': 1495.0,
-                'Co-C': 1597.39,
-                'Pd-C': 1828.05,
-                'Pt-C': 2041.4,
-                'Ru-C': 2227.1,
-                'ReC': 2747.84,
-                'WC-C': 3020.75
-            }
-            for k, v in builtins.items():
-                self.fp_library[k] = {'Temperature': float(v), 'Signal': None}
+        """Fill self.fp_library: name -> {'Temperature', 'Signal'} (see load_fixed_point_library)."""
+        self.fp_library = load_fixed_point_library()
 
     def on_fp_name_changed(self, combobox, temp_edit, signal_edit):
         """When a fixed-point name is chosen, auto-fill temperature and signal (if available).

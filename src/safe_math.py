@@ -192,10 +192,12 @@ def safe_make_function(equation_str: str, param_names: list):
 
     # Walk the tree to check for unsafe nodes BEFORE any data is provided
     # (use dummy variables just for validation)
-    dummy_vars = {"x": 1.0, "np": np}
-    dummy_vars.update({name: 1.0 for name in param_names})
+    one = np.float64(1.0)
+    dummy_vars = {"x": one, "np": np}
+    dummy_vars.update({name: one for name in param_names})
     try:
-        _SafeEvaluator(dummy_vars).visit(tree)
+        with np.errstate(all="ignore"):
+            _SafeEvaluator(dummy_vars).visit(tree)
     except Exception as e:
         raise ValueError(f"Equation validation failed: {e}") from e
 
