@@ -89,6 +89,7 @@ def test_library_uses_repo_fixed_points():
     assert lib["Fe-C"]["Temperature"] == pytest.approx(1426.71)
     assert lib["Pd-C"]["Temperature"] == pytest.approx(1764.95)
     assert lib["Cu"]["Signal"] == pytest.approx(2.6772e-10)
+    assert lib["Pt-C"]["Temperature"] == pytest.approx(2011.43)   # published HTFP value (POI)
     assert {"Ag", "Au"} <= set(lib)                 # built-ins without a JSON file stay selectable
     assert "CoC" not in lib and "Co-C" in lib       # CoC.json replaces the Co-C entry, no duplicate
 
