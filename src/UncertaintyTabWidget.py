@@ -483,7 +483,7 @@ class UncertaintyTabWidget(QWidget):
             
         self.graph_canvas_cal.title = 'Calibration ' + title
         self.cal_ax.set_title(self.graph_canvas_cal.title, fontsize=12, color=self.graph_canvas_cal.text_color, weight='bold')
-        self.cal_ax.set_ylabel("Signal, a.u", color=self.graph_canvas_cal.text_color)
+        self.cal_ax.set_ylabel("Signal, a.u.", color=self.graph_canvas_cal.text_color)
         self.cal_ax.set_xlabel("Temperature, K", color=self.graph_canvas_cal.text_color)
         self.cal_ax.tick_params(colors=self.graph_canvas_cal.text_color)
         self.cal_ax.grid(True, alpha=0.3, color=self.graph_canvas_cal.grid_color, linestyle='--')

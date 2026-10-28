@@ -366,6 +366,24 @@ class DataAnalysisPage(QWidget):
         return widget
     
     @staticmethod
+    def _axis_label(name):
+        """Axis label with unit; temperatures are always plotted in kelvin."""
+        return "Temperature (K)" if name == "Temperature" else "Signal (a.u.)"
+
+    @staticmethod
+    def _deriv_axis_label(name, order=1):
+        sym, unit = ("T", "K") if name == "Temperature" else ("S", "a.u.")
+        if order == 2:
+            return f"d²{sym}/dt² ({unit}/s²)"
+        return f"d{sym}/dt ({unit}/s)"
+
+    def _temperature_K(self):
+        """Temperature series in kelvin, whatever unit the file was loaded in"""
+        if self.temperature is None:
+            return None
+        return self.temperature if self.data_unit_kelvin else self.temperature + 273.15
+
+    @staticmethod
     def _empty_results():
         return {m: {'POI': None, 'Liquidus Fraction': None, 'Liquidus Intersection': None, 'Melt Range': None}
                 for m in ('CCT WG5 method', '3rd Degree Polynomial', 'Selective Fit')}
@@ -575,23 +593,23 @@ class DataAnalysisPage(QWidget):
         
         # Plot based on domain selection
         if domain in ["Temperature", "Both"]:
-            ax.plot(self.time, self.temperature, '-', lw=2, label='Temperature', color='blue')
-            ax.set_ylabel('Temperature (°C)', color='blue')
+            ax.plot(self.time, self._temperature_K(), '-', lw=2, label='Temperature', color='blue')
+            ax.set_ylabel('Temperature (K)', color='blue')
             ax.tick_params(axis='y', labelcolor='blue')
         
         if domain in ["Signal", "Both"] and self.signal is not None:
             if domain == "Signal":
                 ax.plot(self.time, self.signal, '-', lw=2, label='Signal', color='orange')
-                ax.set_ylabel('Signal', color='orange')
+                ax.set_ylabel('Signal (a.u.)', color='orange')
                 ax.tick_params(axis='y', labelcolor='orange')
             else:  # Both
                 ax2 = ax.twinx()
                 ax2.plot(self.time, self.signal, '-', lw=1.5, label='Signal', color='orange')
-                ax2.set_ylabel('Signal', color='orange')
+                ax2.set_ylabel('Signal (a.u.)', color='orange')
                 ax2.tick_params(axis='y', labelcolor='orange')
         
         # Format x-axis as hh:mm:ss
-        ax.set_xlabel('Time')
+        ax.set_xlabel('Time (hh:mm:ss)')
         ax.xaxis.set_major_formatter(FuncFormatter(self._seconds_to_hhmmss))
         
         # Add region shading if selected
@@ -828,7 +846,7 @@ class DataAnalysisPage(QWidget):
         
         # Cache both domains so POI/liquidus can report both when "Both" is selected
         self._deriv_cache = {}
-        for d_name, d_arr in (("Temperature", self.temperature), ("Signal", self.signal)):
+        for d_name, d_arr in (("Temperature", self._temperature_K()), ("Signal", self.signal)):
             if d_arr is not None:
                 yy = d_arr[left:right]
                 self._deriv_cache[d_name] = (x, yy, np.gradient(yy, x))
@@ -840,7 +858,7 @@ class DataAnalysisPage(QWidget):
             dy_label = 'dS/dt'
             self.deriv_yname = "Signal"
         else:  # Temperature or Both (use Temperature for derivative)
-            y = self.temperature[left:right]
+            y = self._temperature_K()[left:right]
             y_label = 'Temperature'
             dy_label = 'dT/dt'
             self.deriv_yname = "Temperature"
@@ -858,9 +876,9 @@ class DataAnalysisPage(QWidget):
         line1 = ax.plot(x, y, 'b-', lw=2, label=y_label)[0]
         ax2 = ax.twinx()
         line2 = ax2.plot(x, dy, 'r-', lw=1.5, label=dy_label)[0]
-        ax.set_xlabel('Time')
-        ax.set_ylabel(f'{y_label} ({"°C" if domain == "Temperature" else "a.u."})', color='b')
-        ax2.set_ylabel(dy_label, color='r')
+        ax.set_xlabel('Time (hh:mm:ss)')
+        ax.set_ylabel(self._axis_label(y_label), color='b')
+        ax2.set_ylabel(self._deriv_axis_label(y_label), color='r')
         ax.xaxis.set_major_formatter(FuncFormatter(self._seconds_to_hhmmss))
         
         # Create legends with proper handles and make them draggable
@@ -971,14 +989,14 @@ class DataAnalysisPage(QWidget):
         
         # Draw POI plot
         ax.set_title('POI / Derivative (CCT WG5)')
-        ax.set_xlabel('Time, hh:mm:ss')
-        ax.set_ylabel(self.deriv_yname, color='b')
+        ax.set_xlabel('Time (hh:mm:ss)')
+        ax.set_ylabel(self._axis_label(self.deriv_yname), color='b')
         ax.plot(x, y, 'b-', lw=2, label=self.deriv_yname)
         ax.tick_params(axis='y', labelcolor='b')
         
         ax2 = ax.twinx()
         deriv_label = 'dS/dt' if self.deriv_yname == 'Signal' else 'dT/dt'
-        ax2.set_ylabel(deriv_label, color='r')
+        ax2.set_ylabel(self._deriv_axis_label(self.deriv_yname), color='r')
         ax2.plot(x, dy, 'r-', lw=1.5, label=deriv_label)
         ax2.tick_params(axis='y', labelcolor='r')
         
@@ -1098,12 +1116,12 @@ class DataAnalysisPage(QWidget):
         
         # Plot
         ax.set_title('POI / Derivative (3rd Degree Polynomial)')
-        ax.set_xlabel('Time')
-        ax.set_ylabel(self.deriv_yname)
+        ax.set_xlabel('Time (hh:mm:ss)')
+        ax.set_ylabel(self._axis_label(self.deriv_yname))
         ax.plot(x, y, 'b-', lw=2, label=self.deriv_yname)
         ax2 = ax.twinx()
         deriv_label = 'dS/dt' if self.deriv_yname == 'Signal' else 'dT/dt'
-        ax2.set_ylabel(deriv_label)
+        ax2.set_ylabel(self._deriv_axis_label(self.deriv_yname))
         ax2.plot(x, dy, 'r-', lw=1.5, label=deriv_label)
         
         # Cubic fit line (scale back if needed)
@@ -1121,9 +1139,9 @@ class DataAnalysisPage(QWidget):
         leg = ax.legend(loc='upper left')
         if leg is not None:
             leg.set_draggable(True)
-        ax.set_ylabel(self.deriv_yname, color='b')
+        ax.set_ylabel(self._axis_label(self.deriv_yname), color='b')
         ax.tick_params(axis='y', labelcolor='b')
-        ax2.set_ylabel(deriv_label, color='r')
+        ax2.set_ylabel(self._deriv_axis_label(self.deriv_yname), color='r')
         ax2.tick_params(axis='y', labelcolor='r')
         self.canvas_poi.figure.tight_layout()
         self.canvas_poi.draw()
@@ -1258,15 +1276,15 @@ class DataAnalysisPage(QWidget):
         
         # Plot
         ax.set_title(f'POI / Derivative (Selective Fit - {accepted} fits)')
-        ax.set_xlabel('Time')
-        ax.set_ylabel(self.deriv_yname, color='b')
+        ax.set_xlabel('Time (hh:mm:ss)')
+        ax.set_ylabel(self._axis_label(self.deriv_yname), color='b')
         ax.plot(x, y, 'b-', lw=2, label=self.deriv_yname)
         ax.tick_params(axis='y', labelcolor='b')
         
         # First derivative on first right axis
         ax2 = ax.twinx()
         deriv_label = 'dS/dt' if self.deriv_yname == 'Signal' else 'dT/dt'
-        ax2.set_ylabel(deriv_label, color='r')
+        ax2.set_ylabel(self._deriv_axis_label(self.deriv_yname), color='r')
         ax2.plot(x, dy, 'r-', lw=1.5, label=deriv_label)
         ax2.tick_params(axis='y', labelcolor='r')
         
@@ -1275,7 +1293,7 @@ class DataAnalysisPage(QWidget):
         # Offset the third axis to the right (increased offset for better visibility)
         ax3.spines['right'].set_position(('outward', 70))
         deriv2_label = 'd²S/dt²' if self.deriv_yname == 'Signal' else 'd²T/dt²'
-        ax3.set_ylabel(deriv2_label, color='orange', fontsize=9)
+        ax3.set_ylabel(self._deriv_axis_label(self.deriv_yname, order=2), color='orange', fontsize=9)
         ax3.plot(x, ddy, '-', lw=1.5, color='orange', label=deriv2_label, alpha=0.7)
         ax3.tick_params(axis='y', labelcolor='orange')
         
@@ -1461,8 +1479,8 @@ class DataAnalysisPage(QWidget):
         crop_times = self.deriv_x[ms_deriv:me_deriv+1]
         crop_vals = y_data[ms_deriv:me_deriv+1]
         ax_top.plot(crop_times, crop_vals, color='b', lw=2, label=y_label)
-        ax_top.set_ylabel(f"{y_label}, {'°C' if y_label == 'Temperature' else 'a.u.'}")
-        ax_top.set_xlabel("Time, hh:mm:ss")
+        ax_top.set_ylabel(self._axis_label(y_label))
+        ax_top.set_xlabel("Time (hh:mm:ss)")
         ax_top.set_title("Liquidus (Fraction Method)")
         ax_top.legend()
         ax_top.grid(True, alpha=0.3)
@@ -1519,8 +1537,8 @@ class DataAnalysisPage(QWidget):
                           c='r', s=60, zorder=5, label=f"Liquidus: {liq_str}")
             
             # Formatting bottom plot
-            ax_bottom.set_xlabel("Fraction")
-            ax_bottom.set_ylabel(f"{y_label}, {'°C' if y_label == 'Temperature' else 'a.u.'}")
+            ax_bottom.set_xlabel("Fraction (dimensionless)")
+            ax_bottom.set_ylabel(self._axis_label(y_label))
             ax_bottom.set_title("Power-Law Fit (CCT WG5)")
             ax_bottom.grid(True, alpha=0.3)
             ax_bottom.legend()
@@ -1554,7 +1572,7 @@ class DataAnalysisPage(QWidget):
             return
         
         x = self.deriv_x if self.deriv_x is not None else self.time
-        y = self.deriv_y if self.deriv_y is not None else self.temperature
+        y = self.deriv_y if self.deriv_y is not None else self._temperature_K()
         y_label = self.deriv_yname if hasattr(self, 'deriv_yname') else "Temperature"
         n = len(y)
         
@@ -1645,8 +1663,8 @@ class DataAnalysisPage(QWidget):
         
         # Plot
         ax.set_title('Liquidus (Intersection Method)')
-        ax.set_xlabel('Time, hh:mm:ss')
-        ax.set_ylabel(f'{y_label} ({"°C" if y_label == "Temperature" else "a.u."})')
+        ax.set_xlabel('Time (hh:mm:ss)')
+        ax.set_ylabel(self._axis_label(y_label))
         ax.plot(x, y, 'b-', lw=2, label=y_label)
         
         # Plot fitted lines
@@ -1704,15 +1722,9 @@ class DataAnalysisPage(QWidget):
                 
                 # Convert temperature for display if needed (for POI, Liquidus columns)
                 if value is not None and self.results_view == 'Temperature' and key in ['POI', 'Liquidus Fraction', 'Liquidus Intersection']:
-                    # Values are stored in the same unit as loaded data
-                    # Convert to display unit if different
-                    if self.data_unit_kelvin and self.temp_unit_celsius:
-                        # Data is in K, display in °C
+                    # Values are stored in kelvin; convert for display only
+                    if self.temp_unit_celsius:
                         value = value - 273.15
-                    elif not self.data_unit_kelvin and not self.temp_unit_celsius:
-                        # Data is in °C, display in K
-                        value = value + 273.15
-                    # If both are same unit, no conversion needed
                 
                 # Smart formatting: use scientific notation for very small values
                 if value is not None:
@@ -1763,13 +1775,15 @@ class DataAnalysisPage(QWidget):
         self.data_unit_kelvin = (unit_text == "K")
         
         if self.temperature is not None and old_unit_kelvin != self.data_unit_kelvin:
-            # Only update the unit flag, do not convert the actual data values
-            self._log(f"Data unit indicator changed to {unit_text} (data values unchanged)", "INFO")
-            
-            # Update plots with new unit label
+            # Data values are kept as loaded; plots and results are always in kelvin
+            self._log(f"Data unit changed to {unit_text}; plots stay in K", "INFO")
             self.update_main_plot()
             if self.deriv_y is not None:
-                self._log("Data unit label changed - derivative still valid", "INFO")
+                # Derivative, POI and liquidus were computed in the previous unit
+                self._deriv_cache = {}
+                self.deriv_x = self.deriv_y = self.deriv_dy = None
+                self.on_clear_results()
+                self._log("Previous derivative/results cleared - recompute the derivative", "WARNING")
     
     def _find_two_peaks(self, x, dy, min_sep=200.0):
         """Find indices of two highest peaks in derivative, separated by min_sep"""

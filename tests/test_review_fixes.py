@@ -221,3 +221,27 @@ def test_data_analysis_both_domains_reported():
     page.cb_results_view.setCurrentText("Temperature")
     assert page.btn_temp_unit.isEnabled()
     page.deleteLater()
+
+
+def test_data_analysis_plots_kelvin_with_units():
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication, QFileDialog
+    from pages.data_analysis_page import DataAnalysisPage
+    app = QApplication.instance() or QApplication([])
+    page = DataAnalysisPage()
+    path = str(ROOT / "Example_data" / "Signal-Temperature" / "LP5_Fe-C.txt")
+    QFileDialog.getOpenFileName = staticmethod(lambda *a, **k: (path, ""))
+    page.load_data()
+    t_loaded = page.temperature.copy()
+    page.cb_domain.setCurrentText("Temperature")
+    page.cb_data_unit.setCurrentText("°C")  # file values are interpreted as degrees Celsius
+    page.update_main_plot()
+    line = page.canvas_main.ax.get_lines()[0]
+    assert np.allclose(line.get_ydata(), t_loaded + 273.15)
+    assert page.canvas_main.ax.get_ylabel() == "Temperature (K)"
+    page.on_derivative()
+    assert np.allclose(page.deriv_y, t_loaded + 273.15)
+    assert "(K/s)" in page.canvas_poi.figure.axes[1].get_ylabel()
+    assert page.canvas_poi.figure.axes[0].get_ylabel() == "Temperature (K)"
+    page.deleteLater()
