@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QWidget, QTabWidget, QScrollArea, QHBoxLayout, QAp
     QPushButton, QSplitter, QFileDialog, QAbstractScrollArea, QAbstractItemView, QHeaderView, QCheckBox
 from PySide6.QtCore import Qt, QLocale
 from pathlib import Path
+from app_paths import resource_path
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
@@ -25,7 +26,7 @@ class UncertaintyTabWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__()
 
-        models_dir = Path(__file__).parent.parent / "models"
+        models_dir = resource_path("models")
         with open(models_dir / 'standard_deviation_model.json', 'r') as openfile:
             self.std_model = json.load(openfile)
 
@@ -251,7 +252,7 @@ class UncertaintyTabWidget(QWidget):
         self.model_func_layout = QVBoxLayout()
         self.model_label_text = QLabel("Model Function (Sakuma-Hattori):")
         self.model_func_layout.addWidget(self.model_label_text)
-        img_path = str(Path(__file__).parent.parent / "img" / "model_function.png")
+        img_path = str(resource_path("img", "model_function.png"))
         pixmap = QPixmap(img_path)
         pixmap_resized = pixmap.scaled(500, 500, Qt.AspectRatioMode.KeepAspectRatio, Qt.SmoothTransformation)
         self.model_label = QLabel()

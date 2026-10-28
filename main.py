@@ -30,6 +30,7 @@ from matplotlib.widgets import SpanSelector, RectangleSelector
 # --- Import uncertainty calculation modules ---
 try:
     sys.path.insert(0, str(Path(__file__).parent / "src"))
+    from app_paths import resource_path
     from UncertaintyFunctions import _Sin, func_dic
     from uncertainty import UncertaintyComponent, combine_uns, to_SI
     from UncertaintyWidget import UncertaintyWidget
@@ -527,12 +528,12 @@ def main():
     import os
     
     # Set application icon
-    icon_path = os.path.join(os.path.dirname(__file__), "img", "ume_1.png")
+    icon_path = str(resource_path("img", "ume_1.png"))
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
         
     # Path to splash image
-    splash_path = os.path.join(os.path.dirname(__file__), "img", "mfx_calc.png")
+    splash_path = str(resource_path("img", "mfx_calc.png"))
     splash = None
     if os.path.exists(splash_path):
         splash_pix = QPixmap(splash_path)

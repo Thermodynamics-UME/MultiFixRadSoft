@@ -2,6 +2,7 @@
 import logging
 import json
 from pathlib import Path
+from app_paths import user_path
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QFileDialog, QLineEdit, QCheckBox, QGroupBox, QFormLayout,
@@ -22,7 +23,7 @@ from theme_manager import ThemeManager
 logger = logging.getLogger(__name__)
 
 # --- Global plot settings logic ---
-PLOT_SETTINGS_PATH = Path(__file__).parent.parent / "models/plot_settings.json"
+PLOT_SETTINGS_PATH = user_path("models", "plot_settings.json")
 
 def load_plot_settings(file_path=None):
     """Load plot settings from JSON file"""
@@ -37,6 +38,7 @@ def save_plot_settings(settings, file_path=None):
     """Save plot settings to JSON file"""
     try:
         path = file_path if file_path else PLOT_SETTINGS_PATH
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(settings, f, indent=2)
     except Exception as e:

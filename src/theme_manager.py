@@ -4,6 +4,7 @@ import json
 import logging
 import os
 from pathlib import Path
+from app_paths import user_path
 from PySide6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, 
     QGridLayout, QLineEdit, QColorDialog, QMessageBox, QFrame
@@ -90,7 +91,7 @@ class ThemeManager:
         },
     }
     
-    CUSTOM_THEMES_FILE = str(Path(__file__).parent.parent / "models" / "custom_themes.json")
+    CUSTOM_THEMES_FILE = str(user_path("models", "custom_themes.json"))
     CUSTOM_THEMES = {}
 
     @staticmethod
@@ -107,6 +108,7 @@ class ThemeManager:
     def save_custom_themes():
         """Save custom themes to file"""
         try:
+            Path(ThemeManager.CUSTOM_THEMES_FILE).parent.mkdir(parents=True, exist_ok=True)
             with open(ThemeManager.CUSTOM_THEMES_FILE, 'w') as f:
                 json.dump(ThemeManager.CUSTOM_THEMES, f, indent=4)
         except Exception as e:

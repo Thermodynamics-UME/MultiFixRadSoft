@@ -15,6 +15,7 @@ from PySide6.QtGui import QFont, QColor, QKeyEvent, QKeySequence, QAction
 
 from plot_canvas import PlotCanvas
 from theme_manager import ThemeManager
+from app_paths import data_folder
 
 # np.trapezoid only exists from numpy 2.0; np.trapz is its numpy 1.x name.
 _trapezoid = getattr(np, "trapezoid", None) or np.trapz
@@ -48,7 +49,7 @@ def load_fixed_point_library(fixed_points_dir=None):
 
     library = {k: {'Temperature': float(v), 'Signal': None} for k, v in _BUILTIN_FIXED_POINTS.items()}
     if fixed_points_dir is None:
-        fixed_points_dir = Path(__file__).resolve().parents[2] / "Fixed Points"
+        fixed_points_dir = data_folder("Fixed Points")
 
     def norm(name):
         return name.replace('-', '').lower()

@@ -2,6 +2,7 @@ import sys
 import logging
 import json
 from pathlib import Path
+from app_paths import data_folder, resource_root
 import numpy as np
 import pandas as pd
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
@@ -165,7 +166,7 @@ class UncertaintyBudgetPage(QWidget):
         
         # We need to find the root directory.
         # If we assume src/pages is 2 levels deep from root
-        root_dir = Path(__file__).parent.parent.parent
+        root_dir = resource_root()
         
         # Load sensor data
         try:
@@ -194,7 +195,7 @@ class UncertaintyBudgetPage(QWidget):
         
         # Auto-load fixed points from Fixed Points folder
         try:
-            fixed_points_folder = root_dir / "Fixed Points"
+            fixed_points_folder = data_folder("Fixed Points")
             if fixed_points_folder.exists():
                 json_files = list(fixed_points_folder.glob("*.json"))
                 for json_file in json_files:

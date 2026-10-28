@@ -5,13 +5,14 @@ from UncertaintyWidget import UncertaintyWidget
 
 
 from pathlib import Path
+from app_paths import resource_path
 
 class AddFixedPoint(QMainWindow):
     def __init__(self):
         super().__init__()
 
         # Load model for uncertainty components
-        model_path = Path(__file__).parent.parent / "models" / "uncertainty_model.json"
+        model_path = resource_path("models", "uncertainty_model.json")
         with open(model_path, 'r') as openfile:
             self.un_model = json.load(openfile)
 
