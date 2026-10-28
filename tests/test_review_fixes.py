@@ -239,9 +239,9 @@ def test_data_analysis_plots_kelvin_with_units():
     page.update_main_plot()
     line = page.canvas_main.ax.get_lines()[0]
     assert np.allclose(line.get_ydata(), t_loaded + 273.15)
-    assert page.canvas_main.ax.get_ylabel() == "Temperature (K)"
+    assert page.canvas_main.ax.get_ylabel() == "Temperature, K"
     page.on_derivative()
     assert np.allclose(page.deriv_y, t_loaded + 273.15)
-    assert "(K/s)" in page.canvas_poi.figure.axes[1].get_ylabel()
-    assert page.canvas_poi.figure.axes[0].get_ylabel() == "Temperature (K)"
+    assert ", K/s" in page.canvas_poi.figure.axes[1].get_ylabel()
+    assert page.canvas_poi.figure.axes[0].get_ylabel() == "Temperature, K"
     page.deleteLater()

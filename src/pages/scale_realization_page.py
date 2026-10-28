@@ -1466,8 +1466,8 @@ class ScaleRealizationPage(QWidget):
         try:
             self.input_canvas.ax.clear()
             self.input_canvas.ax.plot(self.temperatures, self.signals, 'o', label='Signal vs Temperature')
-            self.input_canvas.ax.set_xlabel('Temperature (K)')
-            self.input_canvas.ax.set_ylabel('Signal (a.u.)')
+            self.input_canvas.ax.set_xlabel('Temperature, K')
+            self.input_canvas.ax.set_ylabel('Signal, a.u.')
             self.input_canvas.ax.set_title('Calibration Data Preview')
             self.input_canvas.ax.legend()
             self.input_canvas.ax.grid(True, alpha=0.3)
@@ -1528,8 +1528,8 @@ class ScaleRealizationPage(QWidget):
             except Exception as e:
                 self._log(f"Could not calculate FWHM/Lambda markers: {str(e)}", "WARNING")
             
-            self.input_canvas.ax.set_xlabel('Wavelength (nm)')
-            self.input_canvas.ax.set_ylabel('Spectral Responsivity (a.u.)')
+            self.input_canvas.ax.set_xlabel('Wavelength, nm')
+            self.input_canvas.ax.set_ylabel('Spectral Responsivity, a.u.')
             self.input_canvas.ax.set_title('Spectral Responsivity Curve')
             self.input_canvas.ax.legend()
             self.input_canvas.ax.grid(True, alpha=0.3)
@@ -1727,8 +1727,8 @@ class ScaleRealizationPage(QWidget):
             # Plot error
             self.its90_canvas.ax.clear()
             self.its90_canvas.ax.plot(temps_fit, errors, 'r-')
-            self.its90_canvas.ax.set_xlabel('Temperature (K)')
-            self.its90_canvas.ax.set_ylabel('Error (K)')
+            self.its90_canvas.ax.set_xlabel('Temperature, K')
+            self.its90_canvas.ax.set_ylabel('Error, K')
             self.its90_canvas.ax.set_title('ITS-90 Fit Error')
             self.its90_canvas.ax.grid(True, alpha=0.3)
             self.its90_canvas.draw()
@@ -2071,8 +2071,8 @@ class ScaleRealizationPage(QWidget):
                                               bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
             
             self.sakuma_canvas.ax.plot(xlin, y_fit, '-', label='Fit', linewidth=2)
-            self.sakuma_canvas.ax.set_xlabel('T (K)')
-            self.sakuma_canvas.ax.set_ylabel('S (a.u.)')
+            self.sakuma_canvas.ax.set_xlabel('T, K')
+            self.sakuma_canvas.ax.set_ylabel('S, a.u.')
             self.sakuma_canvas.ax.legend()
             self.sakuma_canvas.ax.grid(True, alpha=0.3)
             # Use subplots_adjust instead of tight_layout for more control over bottom margin (labels)
@@ -2096,8 +2096,8 @@ class ScaleRealizationPage(QWidget):
                 
                 self.sakuma_error_canvas.ax.clear()
                 self.sakuma_error_canvas.ax.plot(xData_plot_filtered, np.abs(xData_plot_filtered - diff_arr), 'o')
-                self.sakuma_error_canvas.ax.set_xlabel('T (K)')
-                self.sakuma_error_canvas.ax.set_ylabel('ΔT (K)')
+                self.sakuma_error_canvas.ax.set_xlabel('T, K')
+                self.sakuma_error_canvas.ax.set_ylabel('ΔT, K')
 
                 self.sakuma_error_canvas.ax.set_title('Fitting Error')
                 self.sakuma_error_canvas.ax.grid(True, alpha=0.3)
