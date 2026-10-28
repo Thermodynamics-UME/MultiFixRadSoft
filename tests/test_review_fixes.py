@@ -147,3 +147,77 @@ def test_scan_nonpositive_centre_is_rejected(scan):
     y[x == 0] = -1e-6
     with pytest.raises(ValueError, match="centre"):
         prepare_scan(x, y)
+
+
+# ---- Optimal combination search (Scale Realization) -------------------------
+
+@pytest.fixture(scope="module")
+def scale_page():
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication
+    from pages.scale_realization_page import ScaleRealizationPage
+    app = QApplication.instance() or QApplication([])
+    page = ScaleRealizationPage()
+    rows = pd.read_csv(ROOT / "Example_data" / "Scale Realization" / "T-S.txt", skipinitialspace=True)
+    for _, r in rows.iterrows():
+        page.add_fixed_point_row(r["Name"], str(r["Temp"]), str(r["Signal"]))
+    yield page, len(rows)
+    page.deleteLater()
+
+
+def test_sakuma_fit_silent_recovers_fixed_points(scale_page):
+    page, n = scale_page
+    res = page._sakuma_fit_silent(list(range(n)), eval_row_indices=list(range(n)))
+    assert res is not None and res["n"] == n
+    assert res["max_mK"] < 150  # same data as test_all_example_fixed_points_fit_data
+
+
+def test_find_optimal_combination_ranks_by_max_error(scale_page, monkeypatch):
+    page, n = scale_page
+    from pages import scale_realization_page as srp
+    captured = {}
+
+    class FakeDialog:
+        def __init__(self, results, parent=None, apply_callback=None):
+            captured["results"] = results
+
+        def exec(self):
+            return 0
+
+    monkeypatch.setattr(srp, "OptimalCombinationResultDialog", FakeDialog)
+    page.find_optimal_combination()
+    results = captured["results"]
+    assert len(results) == sum(1 for k in range(3, n + 1) for _ in itertools.combinations(range(n), k))
+    errs = [r["max_mK"] for r in results]
+    assert errs == sorted(errs)
+    assert all(r["n"] >= 3 for r in results)  # no spectral data loaded -> n starts at 3
+
+
+# ---- Data analysis: "Both" domain reports temperature and signal --------------
+
+def test_data_analysis_both_domains_reported():
+    import os
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    from PySide6.QtWidgets import QApplication, QFileDialog
+    from pages.data_analysis_page import DataAnalysisPage
+    app = QApplication.instance() or QApplication([])
+    page = DataAnalysisPage()
+    path = str(ROOT / "Example_data" / "Signal-Temperature" / "LP5_Fe-C.txt")
+    QFileDialog.getOpenFileName = staticmethod(lambda *a, **k: (path, ""))
+    page.load_data()
+    page.cb_domain.setCurrentText("Both")
+    page.on_derivative()
+    page.cb_poi_method.setCurrentText("3rd Degree Polynomial")
+    page.compute_poi()
+
+    poi_t = page.results_by_domain["Temperature"]["3rd Degree Polynomial"]["POI"]
+    poi_s = page.results_by_domain["Signal"]["3rd Degree Polynomial"]["POI"]
+    assert poi_t is not None and poi_s is not None
+    assert poi_t > 100 and poi_s < 1e-3  # temperature in K, signal in A
+
+    page.cb_results_view.setCurrentText("Signal")
+    assert not page.btn_temp_unit.isEnabled()
+    page.cb_results_view.setCurrentText("Temperature")
+    assert page.btn_temp_unit.isEnabled()
+    page.deleteLater()

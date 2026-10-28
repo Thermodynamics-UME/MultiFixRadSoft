@@ -56,11 +56,10 @@ class DataAnalysisPage(QWidget):
         self.deriv_offset = 0  # Offset from start of full data array
         
         # Results
-        self.results_data = {
-            'CCT WG5 method': {'POI': None, 'Liquidus Fraction': None, 'Liquidus Intersection': None, 'Melt Range': None},
-            '3rd Degree Polynomial': {'POI': None, 'Liquidus Fraction': None, 'Liquidus Intersection': None, 'Melt Range': None},
-            'Selective Fit': {'POI': None, 'Liquidus Fraction': None, 'Liquidus Intersection': None, 'Melt Range': None}
-        }
+        # One result set per domain; `results_data` always points at the domain being computed
+        self.results_by_domain = {d: self._empty_results() for d in ("Temperature", "Signal")}
+        self.results_view = "Temperature"  # Domain shown in the results table
+        self._deriv_cache = {}  # domain -> (x, y, dy) from the last derivative computation
         
         # Temperature units
         self.data_unit_kelvin = True  # Unit of loaded data: True = Kelvin, False = Celsius
@@ -366,11 +365,32 @@ class DataAnalysisPage(QWidget):
         widget.setLayout(layout)
         return widget
     
+    @staticmethod
+    def _empty_results():
+        return {m: {'POI': None, 'Liquidus Fraction': None, 'Liquidus Intersection': None, 'Melt Range': None}
+                for m in ('CCT WG5 method', '3rd Degree Polynomial', 'Selective Fit')}
+
+    @property
+    def results_data(self):
+        return self.results_by_domain[self.deriv_yname]
+
     def _create_results_tab(self):
         """Create the results display tab"""
         widget = QWidget()
         layout = QVBoxLayout()
         
+        # Which domain the table reports
+        view_layout = QHBoxLayout()
+        view_label = QLabel("Report:")
+        view_label.setStyleSheet("font-weight: bold;")
+        view_layout.addWidget(view_label)
+        self.cb_results_view = QComboBox()
+        self.cb_results_view.addItems(["Temperature", "Signal"])
+        self.cb_results_view.currentTextChanged.connect(self.on_results_view_changed)
+        view_layout.addWidget(self.cb_results_view)
+        view_layout.addStretch()
+        layout.addLayout(view_layout)
+
         # Temperature unit toggle
         unit_layout = QHBoxLayout()
         unit_label = QLabel("Temperature Unit:")
@@ -806,6 +826,13 @@ class DataAnalysisPage(QWidget):
             self._log("Cannot compute derivative: need at least 2 data points in selected region", "WARNING")
             return
         
+        # Cache both domains so POI/liquidus can report both when "Both" is selected
+        self._deriv_cache = {}
+        for d_name, d_arr in (("Temperature", self.temperature), ("Signal", self.signal)):
+            if d_arr is not None:
+                yy = d_arr[left:right]
+                self._deriv_cache[d_name] = (x, yy, np.gradient(yy, x))
+
         # Select y-axis data based on domain
         if domain == "Signal":
             y = self.signal[left:right]
@@ -855,6 +882,23 @@ class DataAnalysisPage(QWidget):
         self.lbl_r2_thresh.setVisible(is_selective)
         self.spin_r2_thresh.setVisible(is_selective)
     
+    def _domains_to_compute(self):
+        """Yield each domain to analyse, activating its derivative data first.
+
+        Domain "Both" yields Signal then Temperature, so the plots left on screen are
+        the temperature ones; the results table is switched to the last domain computed.
+        """
+        domain = self.cb_domain.currentText()
+        order = ["Signal", "Temperature"] if domain == "Both" else [domain if domain == "Signal" else "Temperature"]
+        for d in order:
+            cached = self._deriv_cache.get(d)
+            if cached is None:
+                continue
+            self.deriv_x, self.deriv_y, self.deriv_dy = cached
+            self.deriv_yname = d
+            yield d
+            self._show_results_domain(d)
+
     def compute_poi(self):
         """Compute POI based on selected method"""
         if self.deriv_y is None:
@@ -865,12 +909,13 @@ class DataAnalysisPage(QWidget):
         self._log(f"Starting POI computation using method: {method}", "INFO")
         
         try:
-            if method == 'CCT WG5':
-                self._compute_poi_cct_wg5()
-            elif method == '3rd Degree Polynomial':
-                self._compute_poi_polynomial()
-            elif method == 'Selective Fit':
-                self._compute_poi_selective()
+            for _ in self._domains_to_compute():
+                if method == 'CCT WG5':
+                    self._compute_poi_cct_wg5()
+                elif method == '3rd Degree Polynomial':
+                    self._compute_poi_polynomial()
+                elif method == 'Selective Fit':
+                    self._compute_poi_selective()
         except Exception as e:
             self._log(f"POI computation failed: {str(e)}", "ERROR")
             import traceback
@@ -1311,10 +1356,11 @@ class DataAnalysisPage(QWidget):
         self._log(f"Starting liquidus computation using method: {method}", "INFO")
         
         try:
-            if method == 'Fraction Method':
-                self._compute_liquidus_fraction()
-            elif method == 'Intersection Method':
-                self._compute_liquidus_intersection()
+            for _ in self._domains_to_compute():
+                if method == 'Fraction Method':
+                    self._compute_liquidus_fraction()
+                elif method == 'Intersection Method':
+                    self._compute_liquidus_intersection()
         except Exception as e:
             self._log(f"Liquidus computation failed: {str(e)}", "ERROR")
             import traceback
@@ -1654,10 +1700,10 @@ class DataAnalysisPage(QWidget):
                     method_key = 'CCT WG5 method'
                 else:
                     method_key = method
-                value = self.results_data[method_key][key]
+                value = self.results_by_domain[self.results_view][method_key][key]
                 
                 # Convert temperature for display if needed (for POI, Liquidus columns)
-                if value is not None and key in ['POI', 'Liquidus Fraction', 'Liquidus Intersection']:
+                if value is not None and self.results_view == 'Temperature' and key in ['POI', 'Liquidus Fraction', 'Liquidus Intersection']:
                     # Values are stored in the same unit as loaded data
                     # Convert to display unit if different
                     if self.data_unit_kelvin and self.temp_unit_celsius:
@@ -1697,6 +1743,19 @@ class DataAnalysisPage(QWidget):
         
         # Update the results table with new unit
         self._update_results_table()
+
+    def on_results_view_changed(self, domain):
+        """Switch the results table between Temperature and Signal; units only apply to Temperature"""
+        self.results_view = domain
+        self.btn_temp_unit.setEnabled(domain == "Temperature")
+        self._update_results_table()
+
+    def _show_results_domain(self, domain):
+        """Select the domain shown in the results table without re-triggering a rebuild loop"""
+        if self.cb_results_view.currentText() != domain:
+            self.cb_results_view.setCurrentText(domain)
+        else:
+            self.on_results_view_changed(domain)
     
     def on_data_unit_changed(self, unit_text):
         """Handle change in input data temperature unit"""
@@ -1818,7 +1877,8 @@ class DataAnalysisPage(QWidget):
     def on_clear_results(self):
         """Clear all results"""
         self.results_table.clearContents()
-        for method in self.results_data:
-            for key in self.results_data[method]:
-                self.results_data[method][key] = None
+        for store in self.results_by_domain.values():
+            for method in store:
+                for key in store[method]:
+                    store[method][key] = None
 

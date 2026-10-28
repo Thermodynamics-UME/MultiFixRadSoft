@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
     QSplitter, QTabWidget, QTextEdit, QLineEdit, QFileDialog, QMessageBox,
     QSizePolicy, QScrollArea, QGridLayout, QFrame, QDialog, QTableWidget, 
     QTableWidgetItem, QHeaderView, QApplication, QMenu, QStackedWidget,
-    QRadioButton, QButtonGroup
+    QRadioButton, QButtonGroup, QProgressBar, QProgressDialog
 )
 from PySide6.QtCore import Qt, Signal, Slot
 from PySide6.QtGui import QFont, QColor, QKeyEvent, QKeySequence, QAction
@@ -239,6 +239,122 @@ class SakumaResultDialog(QDialog):
         except Exception as e:
             from PySide6.QtWidgets import QMessageBox
             QMessageBox.warning(self, "Error", f"Could not push values: {e}")
+
+
+class OptimalCombinationResultDialog(QDialog):
+    """Dialog that shows all Sakuma-Hattori combination search results ranked by RMS error."""
+
+    def __init__(self, results, parent=None, apply_callback=None):
+        """
+        Parameters
+        ----------
+        results : list of dict
+            Each dict: {'names': [...], 'n': int, 'rms_mK': float,
+                        'indices': [...], 'a': float, 'b': float, 'c': float}
+            Sorted ascending by rms_mK.
+        apply_callback : callable(indices) or None
+            Called with the list of row indices when the user clicks Apply.
+        """
+        super().__init__(parent)
+        self.setWindowTitle("Optimal Combination Search Results")
+        self.setWindowFlags(Qt.Dialog | Qt.WindowCloseButtonHint)
+        self.resize(700, 500)
+        self.results = results
+        self.apply_callback = apply_callback
+
+        layout = QVBoxLayout()
+
+        # --- Header ---
+        hdr = QLabel(f"Found {len(results)} valid combination(s) — sorted by Max |ΔT| ↑  (W=weighted / NW=non-weighted)")
+        hdr.setStyleSheet("font-weight: bold; font-size: 11pt; margin-bottom: 6px;")
+        hdr.setAlignment(Qt.AlignCenter)
+        layout.addWidget(hdr)
+
+        # --- Table ---
+        self.table = QTableWidget()
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(["Rank", "Fixed Points", "n", "Fit", "RMS Error (mK)", "Max |ΔT| (mK)"])
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setAlternatingRowColors(True)
+        self.table.verticalHeader().hide()
+
+        max_show = min(len(results), 200)
+        self.table.setRowCount(max_show)
+        for row_idx, res in enumerate(results[:max_show]):
+            rank_item = QTableWidgetItem(str(row_idx + 1))
+            rank_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 0, rank_item)
+
+            names_str = ", ".join(res['names'])
+            self.table.setItem(row_idx, 1, QTableWidgetItem(names_str))
+
+            n_item = QTableWidgetItem(str(res['n']))
+            n_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 2, n_item)
+
+            fit_label = "W" if res.get('weighted', False) else "NW"
+            fit_item = QTableWidgetItem(fit_label)
+            fit_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(row_idx, 3, fit_item)
+
+            rms_item = QTableWidgetItem(f"{res['rms_mK']:.3f}")
+            rms_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.table.setItem(row_idx, 4, rms_item)
+
+            max_item = QTableWidgetItem(f"{res.get('max_mK', 0.0):.3f}")
+            max_item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.table.setItem(row_idx, 5, max_item)
+
+            # Highlight best row
+            if row_idx == 0:
+                for col in range(6):
+                    item = self.table.item(row_idx, col)
+                    if item:
+                        item.setBackground(QColor("#c8e6c9"))
+                        item.setFont(QFont("Arial", 10, QFont.Bold))
+
+        layout.addWidget(self.table)
+
+        # --- Buttons ---
+        btn_row = QHBoxLayout()
+
+        btn_apply_best = QPushButton("⭐ Apply Best")
+        btn_apply_best.setStyleSheet("background-color: #1565c0; color: white; font-weight: bold; padding: 5px 12px;")
+        btn_apply_best.setToolTip("Apply the best (rank 1) combination")
+        btn_apply_best.clicked.connect(lambda: self._apply(0))
+        btn_row.addWidget(btn_apply_best)
+
+        btn_apply_sel = QPushButton("✔ Apply Selected Row")
+        btn_apply_sel.setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold; padding: 5px 12px;")
+        btn_apply_sel.setToolTip("Apply the currently selected combination")
+        btn_apply_sel.clicked.connect(self._apply_selected)
+        btn_row.addWidget(btn_apply_sel)
+
+        btn_close = QPushButton("Close")
+        btn_close.clicked.connect(self.accept)
+        btn_row.addWidget(btn_close)
+
+        layout.addLayout(btn_row)
+        self.setLayout(layout)
+
+    def _apply(self, result_index):
+        if self.apply_callback and result_index < len(self.results):
+            self.apply_callback(self.results[result_index])
+            self.accept()
+
+    def _apply_selected(self):
+        selected = self.table.currentRow()
+        if selected < 0:
+            QMessageBox.information(self, "Info", "Please select a row first.")
+            return
+        self._apply(selected)
 
 
 class ScaleRealizationPage(QWidget):
@@ -733,6 +849,39 @@ class ScaleRealizationPage(QWidget):
         
         fit_box.setLayout(fit_layout)
         left_layout.addWidget(fit_box)
+
+        # Optimal combination search button
+        btn_optimal = QPushButton("🔎 Find Optimal Combination")
+        btn_optimal.setMinimumHeight(36)
+        btn_optimal.setStyleSheet(
+            "QPushButton { background-color: #4527a0; color: white; font-weight: bold; font-size: 10pt; border-radius: 4px; padding: 4px 8px; }"
+            "QPushButton:hover { background-color: #5e35b1; }"
+            "QPushButton:pressed { background-color: #311b92; }"
+        )
+        btn_optimal.setToolTip(
+            "Try every possible subset of fixed points and report which combination\n"
+            "gives the lowest Sakuma-Hattori fitting RMS error.\n"
+            "If no spectral data is loaded, search starts from subsets of size 3."
+        )
+        btn_optimal.clicked.connect(self.find_optimal_combination)
+        left_layout.addWidget(btn_optimal)
+
+        # Inline progress indicator (hidden until search runs)
+        self.opt_progress_label = QLabel("")
+        self.opt_progress_label.setStyleSheet("color: #5e35b1; font-style: italic; font-size: 9pt;")
+        self.opt_progress_label.setVisible(False)
+        left_layout.addWidget(self.opt_progress_label)
+
+        self.opt_progress_bar = QProgressBar()
+        self.opt_progress_bar.setTextVisible(True)
+        self.opt_progress_bar.setFormat("%v / %m")
+        self.opt_progress_bar.setVisible(False)
+        self.opt_progress_bar.setStyleSheet(
+            "QProgressBar { border: 1px solid #5e35b1; border-radius: 3px; text-align: center; height: 14px; }"
+            "QProgressBar::chunk { background-color: #7e57c2; }"
+        )
+        left_layout.addWidget(self.opt_progress_bar)
+
         
         
         left_layout.addStretch(1)  # Add stretch with factor 1 to allow compression
@@ -1962,6 +2111,334 @@ class ScaleRealizationPage(QWidget):
             QMessageBox.critical(self, "Error", f"Sakuma-Hattori fit failed:\n{str(e)}")
             self._log(f"Sakuma-Hattori fit failed: {str(e)}", "ERROR")
     
+    def _sakuma_fit_silent(self, row_indices, eval_row_indices=None, weighted=False):
+        """Silently fit Sakuma-Hattori for the given table row indices.
+
+        Parameters
+        ----------
+        row_indices : list[int]
+            Table rows used for fitting.
+        eval_row_indices : list[int] or None
+            Table rows used to evaluate the overall RMS error after fitting.
+            If None, falls back to row_indices (subset-only evaluation).
+            Pass the full set of valid rows to get a global error metric.
+        weighted : bool
+            If True, use relative-error (weighted) residuals during the iterative
+            optimisation step (applies to n≥2).  This matches the weighted-fit
+            option available in the normal Sakuma-Hattori fitting workflow.
+
+        Returns
+        -------
+        dict or None
+            {'a', 'b', 'c', 'rms_mK', 'max_mK', 'n', 'names', 'indices', 'weighted'}
+            or None on failure.
+        """
+        try:
+            from scipy.optimize import least_squares, leastsq
+
+            # ── Helper: extract T and S from a list of row indices ──────────
+            def _extract_rows(indices):
+                ts, ss, ns = [], [], []
+                for i in indices:
+                    name_cb = self.fp_table.cellWidget(i, 1)
+                    t_item  = self.fp_table.item(i, 2)
+                    s_item  = self.fp_table.item(i, 3)
+                    if name_cb is None or t_item is None or s_item is None:
+                        continue
+                    t_txt = t_item.text().strip()
+                    s_txt = s_item.text().strip()
+                    if not t_txt or not s_txt:
+                        continue
+                    try:
+                        ts.append(float(t_txt))
+                        ss.append(float(s_txt))
+                        ns.append(name_cb.currentText())
+                    except ValueError:
+                        pass
+                return ts, ss, ns
+
+            # ── Extract fitting data ─────────────────────────────────────────
+            temps, signals, names = _extract_rows(row_indices)
+            n = len(temps)
+            if n == 0:
+                return None
+
+            # Sort by temperature
+            order   = sorted(range(n), key=lambda i: temps[i])
+            temps   = [temps[i]   for i in order]
+            signals = [signals[i] for i in order]
+            names   = [names[i]   for i in order]
+
+            c2 = float(self.sakuma_c2_edit.text())
+
+            a_fit, b_fit, c_fit = None, None, None
+
+            if n == 1:
+                if self.wavelength is None:
+                    try:
+                        lamda = float(self.sakuma_phys_lambda.text())
+                        sigma = float(self.sakuma_sigma_edit.text())
+                    except ValueError:
+                        return None
+                else:
+                    dot   = np.sum(self.wavelength * self.spectral_resp)
+                    sp_su = np.sum(self.spectral_resp)
+                    lamda = 0.001 * dot / sp_su
+                    sigma = float(self.sakuma_sigma_edit.text())
+
+                a_fit = lamda * (1 - 6 * sigma**2 / lamda**2)
+                b_fit = c2 * sigma**2 / (2 * lamda**2)
+                c_fit = signals[0] * (np.exp(c2 / (a_fit * temps[0] + b_fit)) - 1)
+
+            elif n == 2:
+                try:
+                    sigma = float(self.sakuma_sigma_edit.text())
+                    lamda_guess = float(self.sakuma_phys_lambda.text())
+                except ValueError:
+                    sigma, lamda_guess = 0.0085, 0.65
+
+                T1, S1 = temps[0], signals[0]
+                T2, S2 = temps[1], signals[1]
+
+                def res_n2(x):
+                    lam, cc = x
+                    if lam <= 0:
+                        return [1e9, 1e9]
+                    at = lam * (1 - 6 * sigma**2 / lam**2)
+                    bt = c2 * sigma**2 / (2 * lam**2)
+                    r1 = S1 - cc / (np.exp(c2 / (at * T1 + bt)) - 1)
+                    r2 = S2 - cc / (np.exp(c2 / (at * T2 + bt)) - 1)
+                    if weighted:
+                        r1 = r1 / S1 if S1 != 0 else r1
+                        r2 = r2 / S2 if S2 != 0 else r2
+                    return [r1, r2]
+
+                a_init  = lamda_guess * (1 - 6 * sigma**2 / lamda_guess**2)
+                b_init  = c2 * sigma**2 / (2 * lamda_guess**2)
+                c_guess = S1 * (np.exp(c2 / (a_init * T1 + b_init)) - 1)
+
+                result = least_squares(res_n2, [lamda_guess, c_guess],
+                                       bounds=([0.1, 0], [10, np.inf]))
+                lamda  = result.x[0]
+                c_fit  = result.x[1]
+                a_fit  = lamda * (1 - 6 * sigma**2 / lamda**2)
+                b_fit  = c2 * sigma**2 / (2 * lamda**2)
+
+            else:
+                try:
+                    lamda0 = float(self.sakuma_phys_lambda.text())
+                    sigma0 = float(self.sakuma_phys_sigma.text())
+                    b0     = float(self.sakuma_phys_b0.text())
+                except ValueError:
+                    lamda0, sigma0, b0 = 0.65, 0.0085, 0.0
+
+                a0_guess = lamda0 * (1 - 6 * sigma0**2 / lamda0**2)
+                b0_guess = c2 * sigma0**2 / (2 * lamda0**2) + b0
+                exp_arg  = c2 / (a0_guess * temps[0] + b0_guess)
+                c0_guess = signals[0] * (np.exp(min(exp_arg, 700)) - 1)
+
+                x0    = [a0_guess, b0_guess, c0_guess]
+                xData = np.array(temps)
+                yData = np.array(signals)
+
+                def residual2(coeff, y, x):
+                    with np.errstate(invalid='ignore', divide='ignore'):
+                        ratio = (coeff[2] / x) + 1
+                        mask  = ratio > 0
+                        res   = np.zeros_like(y)
+                        t_pred = np.where(mask,
+                                          (1 / coeff[0]) * ((c2 / np.log(np.where(mask, ratio, 1))) - coeff[1]),
+                                          0.0)
+                        res[mask] = y[mask] - t_pred[mask]
+                        if weighted:
+                            with np.errstate(invalid='ignore', divide='ignore'):
+                                res[mask] = res[mask] / np.where(y[mask] != 0, y[mask], 1)
+                        res[~mask] = 1e10
+                    return res
+
+                roots, flag = leastsq(residual2, x0, args=(xData, yData), maxfev=3000)
+                if flag not in [1, 2, 3, 4]:
+                    return None
+                a_fit, b_fit, c_fit = roots[0], roots[1], roots[2]
+
+            if a_fit is None or a_fit == 0:
+                return None
+
+            # ── Evaluate error over ALL evaluation rows (global metric) ──────
+            # Use eval_row_indices if given; otherwise fall back to fitted rows.
+            # Read T and S directly from item text (col 2 & 3) — no combobox
+            # needed — so every valid row is included even if it has no name widget.
+            eval_indices = eval_row_indices if eval_row_indices is not None else row_indices
+
+            delta_T_mK = []
+            for i in eval_indices:
+                t_item = self.fp_table.item(i, 2)
+                s_item = self.fp_table.item(i, 3)
+                if t_item is None or s_item is None:
+                    continue
+                try:
+                    t_meas = float(t_item.text().strip())
+                    s_meas = float(s_item.text().strip())
+                except (ValueError, AttributeError):
+                    continue
+                try:
+                    ratio = (c_fit / s_meas) + 1
+                    if ratio <= 0:
+                        continue
+                    t_calc = (1 / a_fit) * ((c2 / np.log(ratio)) - b_fit)
+                    delta_T_mK.append(abs(t_meas - t_calc) * 1000.0)
+                except Exception:
+                    pass
+
+            if not delta_T_mK:
+                return None
+
+            rms_mK = float(np.sqrt(np.mean(np.array(delta_T_mK) ** 2)))
+            max_mK = float(np.max(delta_T_mK))
+
+            return {
+                'a': a_fit, 'b': b_fit, 'c': c_fit,
+                'rms_mK': rms_mK, 'max_mK': max_mK,
+                'n': n, 'names': names,
+                'indices': list(row_indices),
+                'weighted': weighted,
+            }
+
+        except Exception:
+            return None
+
+    def find_optimal_combination(self):
+        """Enumerate every possible subset of fixed-point rows and find the
+        combination that gives the lowest Sakuma-Hattori fitting RMS error."""
+        import itertools
+
+        # --- Collect all rows with valid T and S ---
+        valid_rows = []   # list of row indices with parseable T and S
+        for i in range(self.fp_table.rowCount()):
+            t_item = self.fp_table.item(i, 2)
+            s_item = self.fp_table.item(i, 3)
+            if t_item is None or s_item is None:
+                continue
+            try:
+                float(t_item.text().strip())
+                float(s_item.text().strip())
+                valid_rows.append(i)
+            except ValueError:
+                pass
+
+        N = len(valid_rows)
+        if N == 0:
+            QMessageBox.warning(self, "Warning",
+                                "No fixed points with valid Temperature & Signal data found.")
+            return
+
+        # Minimum subset size
+        if self.wavelength is None:
+            k_min = 3
+            self._log("No spectral data → starting combination search from n=3", "INFO")
+        else:
+            k_min = 1
+            self._log("Spectral data available → starting combination search from n=1", "INFO")
+
+        # Count total combinations
+        total = sum(
+            len(list(itertools.combinations(valid_rows, k)))
+            for k in range(k_min, N + 1)
+        )
+        if total == 0:
+            QMessageBox.warning(self, "Warning",
+                                f"Not enough fixed points for n≥{k_min} combinations.")
+            return
+
+        self._log(f"Optimal search: {N} valid points, {total} combinations to evaluate (n={k_min}..{N})", "INFO")
+
+        # --- Progress dialog ---
+        progress = QProgressDialog(
+            f"Testing {total} combinations...", "Cancel", 0, total, self
+        )
+        progress.setWindowTitle("Optimal Combination Search")
+        progress.setWindowModality(Qt.WindowModal)
+        progress.setMinimumWidth(400)
+        progress.setValue(0)
+        progress.show()
+
+        # Show/update the progress bar in the Sakuma tab
+        if hasattr(self, 'opt_progress_bar'):
+            self.opt_progress_bar.setMaximum(total)
+            self.opt_progress_bar.setValue(0)
+            self.opt_progress_bar.setVisible(True)
+            self.opt_progress_label.setVisible(True)
+            self.opt_progress_label.setText("Searching...")
+
+        results = []
+        done = 0
+        # Each combination is tested twice (weighted + non-weighted)
+        effective_total = total * 2
+
+        for k in range(k_min, N + 1):
+            for combo in itertools.combinations(valid_rows, k):
+                if progress.wasCanceled():
+                    break
+
+                best_res = None
+                for w in (False, True):
+                    res = self._sakuma_fit_silent(
+                        list(combo),
+                        eval_row_indices=valid_rows,
+                        weighted=w,
+                    )
+                    if res is not None:
+                        if best_res is None or res['max_mK'] < best_res['max_mK']:
+                            best_res = res
+                    done += 1
+                    if done % max(1, effective_total // 200) == 0 or done == effective_total:
+                        progress.setValue(min(done // 2, total))
+                        if hasattr(self, 'opt_progress_bar'):
+                            self.opt_progress_bar.setValue(min(done // 2, total))
+                        QApplication.processEvents()
+
+                if best_res is not None:
+                    results.append(best_res)
+
+            if progress.wasCanceled():
+                self._log("Optimal search cancelled by user.", "WARNING")
+                break
+
+        progress.close()
+
+        if hasattr(self, 'opt_progress_bar'):
+            self.opt_progress_bar.setVisible(False)
+            self.opt_progress_label.setVisible(False)
+
+        if not results:
+            QMessageBox.warning(self, "No Results",
+                                "No valid combinations found. Check your data and parameter inputs.")
+            return
+
+        # Sort by RMS error ascending
+        results.sort(key=lambda r: r['max_mK'])
+
+        best = results[0]
+        self._log(
+            f"Optimal combination found: {', '.join(best['names'])} "
+            f"(n={best['n']}, Max|ΔT|={best['max_mK']:.3f} mK, RMS={best['rms_mK']:.3f} mK)",
+            "SUCCESS"
+        )
+
+        def apply_combination(res):
+            """Uncheck all rows, check the selected combo, then run the fit."""
+            indices_set = set(res['indices'])
+            for i in range(self.fp_table.rowCount()):
+                chk_w = self.fp_table.cellWidget(i, 0)
+                if chk_w:
+                    chk = chk_w.layout().itemAt(0).widget()
+                    chk.setChecked(i in indices_set)
+            self.update_sakuma_mode()
+            self.perform_unified_sakuma_fit()
+
+        dlg = OptimalCombinationResultDialog(results, self, apply_callback=apply_combination)
+        dlg.exec()
+
     def display_sakuma_results(self, title, params_dict):
         """Display fit results in popup dialog"""
         # Store for re-opening
