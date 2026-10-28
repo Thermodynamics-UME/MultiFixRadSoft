@@ -16,6 +16,9 @@ from PySide6.QtGui import QFont, QColor, QKeyEvent, QKeySequence, QAction
 from plot_canvas import PlotCanvas
 from theme_manager import ThemeManager
 
+# np.trapezoid only exists from numpy 2.0; np.trapz is its numpy 1.x name.
+_trapezoid = getattr(np, "trapezoid", None) or np.trapz
+
 # Used for names the repo's "Fixed Points" folder does not define (Ag, Au, Pt-C);
 # the JSON files in that folder take precedence.
 _BUILTIN_FIXED_POINTS = {
@@ -1541,14 +1544,14 @@ class ScaleRealizationPage(QWidget):
             # Calculate integrals
             # ref integral
             integrand_ref = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2_val / (self.wavelength * 1e-9 * ref_temp)) - 1))
-            integral_ref = np.trapezoid(integrand_ref, x=self.wavelength * 1e-9)
+            integral_ref = _trapezoid(integrand_ref, x=self.wavelength * 1e-9)
             
             self._log(f"Starting ITS-90 fit calculation for {len(temps_fit)} points...", "INFO")
             
             # Calculate signals for range
             for T in temps_fit:
                 integrand = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2_val / (self.wavelength * 1e-9 * T)) - 1))
-                integral = np.trapezoid(integrand, x=self.wavelength * 1e-9)
+                integral = _trapezoid(integrand, x=self.wavelength * 1e-9)
                 S = Sref * integral / integral_ref
                 signals_calc.append(S)
             
@@ -2116,10 +2119,10 @@ class ScaleRealizationPage(QWidget):
                 
                 # integrals
                 integrand_ref = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2 / (self.wavelength * 1e-9 * ref_temp)) - 1))
-                integral_ref = np.trapezoid(integrand_ref, x=self.wavelength * 1e-9)
+                integral_ref = _trapezoid(integrand_ref, x=self.wavelength * 1e-9)
                 
                 integrand = self.spectral_resp / ((self.wavelength * 1e-9)**5 * (np.exp(c2 / (self.wavelength * 1e-9 * temp)) - 1))
-                integral = np.trapezoid(integrand, x=self.wavelength * 1e-9)
+                integral = _trapezoid(integrand, x=self.wavelength * 1e-9)
                 
                 signal = Sref * integral / integral_ref
                 
