@@ -2433,6 +2433,8 @@ class ScaleRealizationPage(QWidget):
                 if chk_w:
                     chk = chk_w.layout().itemAt(0).widget()
                     chk.setChecked(i in indices_set)
+            # The ranked result was fitted weighted or not; the real fit must match it
+            self.weighted_fit_sched.setChecked(bool(res.get('weighted', False)))
             self.update_sakuma_mode()
             self.perform_unified_sakuma_fit()
 

@@ -245,3 +245,25 @@ def test_data_analysis_plots_kelvin_with_units():
     assert ", K/s" in page.canvas_poi.figure.axes[1].get_ylabel()
     assert page.canvas_poi.figure.axes[0].get_ylabel() == "Temperature, K"
     page.deleteLater()
+
+
+def test_apply_combination_sets_weighted_checkbox(scale_page, monkeypatch):
+    page, n = scale_page
+    from pages import scale_realization_page as srp
+    captured = {}
+
+    class FakeDialog:
+        def __init__(self, results, parent=None, apply_callback=None):
+            captured["results"], captured["apply"] = results, apply_callback
+
+        def exec(self):
+            return 0
+
+    monkeypatch.setattr(srp, "OptimalCombinationResultDialog", FakeDialog)
+    monkeypatch.setattr(page, "perform_unified_sakuma_fit", lambda: None)
+    page.find_optimal_combination()
+    for weighted in (True, False):
+        res = next(r for r in captured["results"] if r["weighted"] is weighted)
+        page.weighted_fit_sched.setChecked(not weighted)
+        captured["apply"](res)
+        assert page.weighted_fit_sched.isChecked() is weighted
