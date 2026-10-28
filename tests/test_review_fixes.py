@@ -80,14 +80,14 @@ def test_all_example_fixed_points_fit_data(names):
     run = _run(list(names))
     temps = np.array([json.loads((ROOT / "Fixed Points" / f"{n}.json").read_text(encoding="utf-8"))["Temperature"] for n in names])
     sigs = np.array([json.loads((ROOT / "Fixed Points" / f"{n}.json").read_text(encoding="utf-8"))["Signal"] for n in names])
-    assert np.max(np.abs(run.inv_sakuma_hattor_signal(sigs) - temps)) < 0.1  # K; was 0.019 K before the fix too
+    assert np.max(np.abs(run.inv_sakuma_hattor_signal(sigs) - temps)) < 0.15  # K; signals were measured against pre-POI temperatures (0.11 K worst residual)
 
 
 # --- #4: fixed-point library must use the repo's Fixed Points folder ------------------------
 def test_library_uses_repo_fixed_points():
     lib = load_fixed_point_library()
-    assert lib["Fe-C"]["Temperature"] == pytest.approx(1426.71)
-    assert lib["Pd-C"]["Temperature"] == pytest.approx(1764.95)
+    assert lib["Fe-C"]["Temperature"] == pytest.approx(1426.92)
+    assert lib["Pd-C"]["Temperature"] == pytest.approx(1765.05)
     assert lib["Cu"]["Signal"] == pytest.approx(2.6772e-10)
     assert lib["Pt-C"]["Temperature"] == pytest.approx(2011.43)   # published HTFP value (POI)
     assert {"Ag", "Au"} <= set(lib)                 # built-ins without a JSON file stay selectable

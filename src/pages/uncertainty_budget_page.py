@@ -238,9 +238,16 @@ class UncertaintyBudgetPage(QWidget):
     
     def export_uncertainty_action(self):
         """Execute uncertainty export"""
-        start = float(self.export_dialog.start_edit.text())
-        stop = float(self.export_dialog.stop_edit.text())
-        step = float(self.export_dialog.step_edit.text())
+        try:
+            start = float(self.export_dialog.start_edit.text())
+            stop = float(self.export_dialog.stop_edit.text())
+            step = float(self.export_dialog.step_edit.text())
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Start, stop and step must be numbers.")
+            return
+        if step <= 0 or stop <= start:
+            QMessageBox.warning(self, "Invalid Input", "Step must be positive and stop must be greater than start.")
+            return
         self.export_dialog.close()
         
         if hasattr(self, 'uncertainty_tab'):
@@ -260,9 +267,16 @@ class UncertaintyBudgetPage(QWidget):
     
     def export_calibration_action(self):
         """Execute calibration export"""
-        start = float(self.export_dialog.start_edit.text())
-        stop = float(self.export_dialog.stop_edit.text())
-        step = float(self.export_dialog.step_edit.text())
+        try:
+            start = float(self.export_dialog.start_edit.text())
+            stop = float(self.export_dialog.stop_edit.text())
+            step = float(self.export_dialog.step_edit.text())
+        except ValueError:
+            QMessageBox.warning(self, "Invalid Input", "Start, stop and step must be numbers.")
+            return
+        if step <= 0 or stop <= start:
+            QMessageBox.warning(self, "Invalid Input", "Step must be positive and stop must be greater than start.")
+            return
         self.export_dialog.close()
         
         if hasattr(self, 'uncertainty_tab'):
@@ -284,6 +298,9 @@ class UncertaintyBudgetPage(QWidget):
         
         try:
             df = pd.read_csv(file_path)
+            if df.shape[1] < 2 or len(df) < 3:
+                QMessageBox.warning(self, "Invalid File", "Sensor data needs two columns (wavelength, response) and at least 3 rows.")
+                return
             
             # Assume first column is wavelength, second is response
             # Convert to numpy arrays explicitly
@@ -501,11 +518,29 @@ class UncertaintyBudgetPage(QWidget):
             else:
                 self.uncertainty_tab.fixed_point_table.removeRow(r)
                 self.del_fixed_point_from_dic(r)
+                self._reindex_fixed_point_rows(r)
         elif action == add_row_action:
             self.add_new_fixed_point_window()
         elif action == save_as_action:
             self.save_as_file_dialog(self.fixed_points[r])
     
+    def _reindex_fixed_point_rows(self, removed):
+        """Shift stored row indices above a deleted row down by one."""
+        table = self.uncertainty_tab.fixed_point_table
+        for row in range(removed, table.rowCount()):
+            for col in (0, 3):
+                cell = table.cellWidget(row, col)
+                if cell is None:
+                    continue
+                for chk in cell.findChildren(QCheckBox):
+                    chk.setProperty("row_index", row)
+        layout = getattr(self.uncertainty_tab, 'fixed_points_layout', None)
+        if layout is not None:
+            for i in range(layout.count()):
+                w = layout.itemAt(i).widget()
+                if hasattr(w, 'index') and w.index > removed:
+                    w.index -= 1
+
     def del_fixed_point_from_dic(self, r):
         """Delete fixed point from dictionary"""
         new_fixed_point = {}

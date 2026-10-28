@@ -14,7 +14,7 @@ from numpy.typing import NDArray
 from UncertaintyFunctions import _Sin
 
 to_SI = {"C": [lambda x: x+273.15, "K"],  # °
-         "F": [lambda x: (x-32)/1.8 + 273.14, "K"],
+         "F": [lambda x: (x-32)/1.8 + 273.15, "K"],
          "K": [lambda x: x, "K"],
          "K ": [lambda x: x, "K"],
          "mK": [lambda x: 1e-3*x, "K"],

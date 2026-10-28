@@ -841,7 +841,7 @@ class CorrectionsPage(QWidget):
             else:
                 # Try to get from emissivity signal input field
                 try:
-                    base_signal = float(self.emiss_signal_input.text())
+                    base_signal = float(self.emiss_signal_edit.text())
                     signal_source = "Emissivity Input Signal"
                 except (ValueError, AttributeError):
                     # Fallback: Extract sc from SSE label

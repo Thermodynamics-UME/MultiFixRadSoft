@@ -22,7 +22,7 @@ from theme_manager import ThemeManager
 logger = logging.getLogger(__name__)
 
 # --- Global plot settings logic ---
-PLOT_SETTINGS_PATH = Path(__file__).parent.parent / "models/modelsplot_settings.json"
+PLOT_SETTINGS_PATH = Path(__file__).parent.parent / "models/plot_settings.json"
 
 def load_plot_settings(file_path=None):
     """Load plot settings from JSON file"""
