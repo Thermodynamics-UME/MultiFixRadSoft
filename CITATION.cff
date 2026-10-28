@@ -23,8 +23,8 @@ article-number: 2489
 year: 2026
 publisher: "MDPI"
 abstract: "Modern GUI application for multi-fixed-point radiation thermometry analysis. Includes data analysis, scale realization, corrections, and comprehensive uncertainty budget calculation."
-version: 1.0.0
-date-released: 2026-03-26
+version: 1.1.0
+date-released: 2026-10-28
 url: "https://github.com/Thermodynamics-UME/MultiFixRadSoft"
 repository-code: "https://github.com/Thermodynamics-UME/MultiFixRadSoft"
 license: "MIT"

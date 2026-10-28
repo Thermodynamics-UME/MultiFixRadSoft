@@ -10,7 +10,7 @@ Developed by [TUBITAK-UME Thermodynamic Metrology Laboratory](https://www.ume.tu
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](CHANGELOG.md)
 
 </div>
 
@@ -30,8 +30,8 @@ The software supports ITS-90 metal fixed points and metal–carbon / metal-carbi
 
 | Module | Capabilities |
 |---|---|
-| **Data Analysis** | Load T–S data; Kalman / Savitzky-Golay / Moving-Average filtering; derivative computation; Point of Inflection (POI) via CCT WG5, polynomial, or selective-fit methods; liquidus temperature calculation |
-| **Scale Realization** | Sakuma-Hattori fitting (1–N fixed points); ITS-90 scale realization; T↔S conversion; σ / λ calculation from spectral data |
+| **Data Analysis** | Load T–S data; Kalman / Savitzky-Golay / Moving-Average filtering; derivative computation; Point of Inflection (POI) via CCT WG5, polynomial, or selective-fit methods; liquidus temperature calculation; temperature and signal analysed together (Domain: Both), reported per domain; temperatures always plotted in K |
+| **Scale Realization** | Sakuma-Hattori fitting (1–N fixed points) with optimal fixed-point combination search (weighted / non-weighted, ranked by max |ΔT|); ITS-90 scale realization; T↔S conversion; σ / λ calculation from spectral data |
 | **Corrections** | Size-of-Source Effect (SSE) with ring-by-ring integration; emissivity correction (Planck's law); temperature-drop correction; linearity analysis |
 | **Uncertainty Budget** | Multi-component uncertainty propagation; sensitivity coefficients for 1, 2, and N-point cases; export to calibration certificate (JSON / CSV) |
 | **Themes** | 7 built-in themes (Nord Dark, Dracula, Monokai, One Dark, Light, Soft Light, Mint Light) + live custom theme editor |
@@ -51,6 +51,7 @@ The software supports ITS-90 metal fixed points and metal–carbon / metal-carbi
 | SciPy | 1.10.0 |
 | pandas | 2.0.0 |
 | Matplotlib | 3.7.0 |
+| openpyxl | 3.1.0 |
 
 ---
 
